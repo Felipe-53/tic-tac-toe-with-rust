@@ -17,10 +17,16 @@ enum Cell {
     Empty,
 }
 
+#[derive(PartialEq)]
+enum GameState {
+    Win,
+    Draw,
+    Disputed,
+}
 struct Game {
     board: [[Cell; 3]; 3],
     turn: Player,
-    draw: bool,
+    state: GameState,
 }
 
 enum MoveResult {
@@ -33,21 +39,17 @@ impl Game {
         Game {
             board: [[Cell::Empty; 3]; 3],
             turn: Player::X,
-            draw: false,
+            state: GameState::Disputed,
         }
     }
 
-    fn is_over(&self) -> bool {
-        if self.draw {
-            return true;
-        }
-
+    fn update_state(&mut self) {
         for row in 0..3 {
             if self.board[row][0] == self.board[row][1]
                 && self.board[row][1] == self.board[row][2]
                 && self.board[row][0] != Cell::Empty
             {
-                return true;
+                self.state = GameState::Win;
             }
         }
 
@@ -56,7 +58,7 @@ impl Game {
                 && self.board[1][col] == self.board[2][col]
                 && self.board[0][col] != Cell::Empty
             {
-                return true;
+                self.state = GameState::Win;
             }
         }
 
@@ -64,17 +66,25 @@ impl Game {
             && self.board[1][1] == self.board[2][2]
             && self.board[0][0] != Cell::Empty
         {
-            return true;
+            self.state = GameState::Win;
         }
 
         if self.board[0][2] == self.board[1][1]
             && self.board[1][1] == self.board[2][0]
             && self.board[0][2] != Cell::Empty
         {
-            return true;
+            self.state = GameState::Win;
         }
 
-        false
+        for row in 0..3 {
+            for col in 0..3 {
+                if self.board[row][col] == Cell::Empty {
+                    return self.state = GameState::Disputed;
+                }
+            }
+        }
+
+        self.state = GameState::Draw;
     }
 
     fn get_human_move(&self) -> (usize, usize) {
@@ -124,15 +134,7 @@ impl Game {
             Player::O => self.board[row][col] = Cell::O,
         }
 
-        for row in 0..3 {
-            for col in 0..3 {
-                if self.board[row][col] == Cell::Empty {
-                    return MoveResult::Success;
-                }
-            }
-        }
-
-        self.draw = true;
+        self.update_state();
         return MoveResult::Success;
     }
 
@@ -164,7 +166,7 @@ impl Game {
 fn main() {
     let mut game = Game::new();
 
-    while !game.is_over() {
+    while game.state == GameState::Disputed {
         game.print();
 
         match game.turn {
@@ -203,7 +205,7 @@ fn main() {
 
     game.print();
 
-    if game.draw {
+    if game.state == GameState::Draw {
         println!("It's a draw!");
         return;
     }
