@@ -20,6 +20,12 @@ enum Cell {
 struct Game {
     board: [[Cell; 3]; 3],
     turn: Player,
+    draw: bool,
+}
+
+enum MoveResult {
+    Success,
+    CellNotEmpty,
 }
 
 impl Game {
@@ -27,10 +33,15 @@ impl Game {
         Game {
             board: [[Cell::Empty; 3]; 3],
             turn: Player::X,
+            draw: false,
         }
     }
 
     fn is_over(&self) -> bool {
+        if self.draw {
+            return true;
+        }
+
         for row in 0..3 {
             if self.board[row][0] == self.board[row][1]
                 && self.board[row][1] == self.board[row][2]
@@ -103,15 +114,26 @@ impl Game {
         position
     }
 
-    fn make_move(&mut self, row: usize, col: usize) -> Result<(), String> {
+    fn make_move(&mut self, row: usize, col: usize) -> MoveResult {
         if self.board[row][col] != Cell::Empty {
-            return Err("Cell is not empty".to_string());
+            return MoveResult::CellNotEmpty;
         }
 
         match self.turn {
-            Player::X => Ok(self.board[row][col] = Cell::X),
-            Player::O => Ok(self.board[row][col] = Cell::O),
+            Player::X => self.board[row][col] = Cell::X,
+            Player::O => self.board[row][col] = Cell::O,
         }
+
+        for row in 0..3 {
+            for col in 0..3 {
+                if self.board[row][col] == Cell::Empty {
+                    return MoveResult::Success;
+                }
+            }
+        }
+
+        self.draw = true;
+        return MoveResult::Success;
     }
 
     fn switch_turns(&mut self) {
@@ -151,9 +173,9 @@ fn main() {
 
                 let (row, col) = game.get_human_move();
                 match game.make_move(row, col) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{}", e);
+                    MoveResult::Success => (),
+                    MoveResult::CellNotEmpty => {
+                        println!("Please choose an empty cell");
                         continue;
                     }
                 }
@@ -165,8 +187,8 @@ fn main() {
                 loop {
                     let (row, col) = game.get_computer_move();
                     match game.make_move(row, col) {
-                        Ok(_) => break,
-                        Err(_) => {
+                        MoveResult::Success => break,
+                        MoveResult::CellNotEmpty => {
                             continue;
                         }
                     }
@@ -179,9 +201,14 @@ fn main() {
         game.switch_turns();
     }
 
-    game.switch_turns();
-
     game.print();
+
+    if game.draw {
+        println!("It's a draw!");
+        return;
+    }
+
+    game.switch_turns();
     println!("Player {:?} won!", game.turn);
 }
 
