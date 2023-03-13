@@ -49,7 +49,7 @@ impl Game {
                 && self.board[row][1] == self.board[row][2]
                 && self.board[row][0] != Cell::Empty
             {
-                self.state = GameState::Win;
+                return self.state = GameState::Win;
             }
         }
 
@@ -58,7 +58,7 @@ impl Game {
                 && self.board[1][col] == self.board[2][col]
                 && self.board[0][col] != Cell::Empty
             {
-                self.state = GameState::Win;
+                return self.state = GameState::Win;
             }
         }
 
@@ -66,14 +66,14 @@ impl Game {
             && self.board[1][1] == self.board[2][2]
             && self.board[0][0] != Cell::Empty
         {
-            self.state = GameState::Win;
+            return self.state = GameState::Win;
         }
 
         if self.board[0][2] == self.board[1][1]
             && self.board[1][1] == self.board[2][0]
             && self.board[0][2] != Cell::Empty
         {
-            self.state = GameState::Win;
+            return self.state = GameState::Win;
         }
 
         for row in 0..3 {
